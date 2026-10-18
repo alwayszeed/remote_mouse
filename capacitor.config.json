@@ -1,0 +1,9 @@
+{
+  "appId": "com.remotemouse.controller",
+  "appName": "Remote Mouse",
+  "webDir": "client",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true
+  }
+}

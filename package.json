@@ -1,0 +1,20 @@
+{
+  "name": "remote-mouse-mobile",
+  "version": "1.0.0",
+  "description": "Wireless Mouse, Keyboard, Magic Trackpad & Remote Control for PC, Laptop, and Mac",
+  "main": "client/app.js",
+  "scripts": {
+    "start": "python server/server.py",
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  }
+}

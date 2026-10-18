@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Remote Mouse & Keyboard</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#090a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-slate">
+  <!-- Hidden audio element for physical volume button interception -->
+  <audio id="volumeAudio" loop preload="auto" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="></audio>
+
+  <!-- App Wrapper -->
+  <div id="appContainer" class="app-container">
+    
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <button id="btnConnModal" class="btn-status" title="Connection Settings">
+          <span id="connDot" class="status-dot disconnected"></span>
+          <span id="connText">Disconnected</span>
+          <span id="pingBadge" class="ping-badge hidden">0ms</span>
+        </button>
+      </div>
+      
+      <div class="header-center">
+        <span id="osBadge" class="os-badge">PC</span>
+      </div>
+
+      <div class="header-right">
+        <button id="btnGyroToggle" class="icon-btn" title="Toggle Gyro Mouse">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 3v6M12 15v6M3 12h6M15 12h6"/>
+          </svg>
+        </button>
+        <button id="btnVoiceInput" class="icon-btn" title="Voice Input">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+        <button id="btnQuickSettings" class="icon-btn" title="Settings">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Views -->
+    <main class="main-content">
+
+      <!-- VIEW 1: TRACKPAD / MOUSE -->
+      <section id="viewTrackpad" class="view-panel active">
+        <!-- Gyro HUD bar (visible when Gyro is ON) -->
+        <div id="gyroHud" class="gyro-hud hidden">
+          <span class="gyro-label">Gyro Mouse Active</span>
+          <button id="btnCalibrateGyro" class="btn-mini">Calibrate Center</button>
+          <button id="btnHoldGyro" class="btn-mini btn-hold">Hold to Steer</button>
+        </div>
+
+        <div class="trackpad-container">
+          <!-- Main Trackpad Touch Area -->
+          <div id="trackpadArea" class="trackpad-surface">
+            <div class="trackpad-hint">
+              <span class="hint-title">Apple Magic Trackpad</span>
+              <span class="hint-sub">1-finger tap: Left Click • 2-finger tap: Right Click • 2-finger pan: Scroll</span>
+            </div>
+            <!-- Pointer Visualizer Dots -->
+            <div id="touchPointers" class="touch-pointers"></div>
+          </div>
+
+          <!-- Secondary Scroll Strip on right side -->
+          <div id="scrollStrip" class="scroll-strip">
+            <div class="scroll-strip-icon">↕</div>
+          </div>
+        </div>
+
+        <!-- Physical Mouse Buttons (Left / Right) -->
+        <div id="mouseButtons" class="mouse-buttons-row">
+          <button id="btnMouseLeft" class="btn-mouse-half btn-left-click">
+            <span class="btn-mouse-text">Left Click</span>
+          </button>
+          <button id="btnMouseMiddle" class="btn-mouse-mid" title="Middle Click">
+            <span>●</span>
+          </button>
+          <button id="btnMouseRight" class="btn-mouse-half btn-right-click">
+            <span class="btn-mouse-text">Right Click</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- VIEW 2: KEYBOARD -->
+      <section id="viewKeyboard" class="view-panel">
+        <div class="keyboard-container">
+          
+          <!-- Universal Text Input Buffer for Any Language & Voice -->
+          <div class="text-input-box">
+            <input type="text" id="keyboardBuffer" placeholder="Type in any language or use voice..." autocomplete="off">
+            <button id="btnSendText" class="btn-action-primary">Send</button>
+            <button id="btnMicInline" class="btn-action-mic" title="Voice Input">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Quick Shortcuts Row -->
+          <div class="shortcuts-scroll-row">
+            <button class="chip-btn" data-hotkey="select_all">Select All</button>
+            <button class="chip-btn" data-hotkey="copy">Copy</button>
+            <button class="chip-btn" data-hotkey="cut">Cut</button>
+            <button class="chip-btn" data-hotkey="paste">Paste</button>
+            <button class="chip-btn" data-hotkey="undo">Undo</button>
+            <button class="chip-btn" data-hotkey="save">Save</button>
+            <button class="chip-btn" data-hotkey="find">Find</button>
+            <button class="chip-btn" data-hotkey="screenshot">Screenshot</button>
+          </div>
+
+          <!-- Function Key Row (F1 - F12) -->
+          <div class="keys-function-row">
+            <button class="f-key" data-key="esc">Esc</button>
+            <button class="f-key" data-key="f1">F1</button>
+            <button class="f-key" data-key="f2">F2</button>
+            <button class="f-key" data-key="f3">F3</button>
+            <button class="f-key" data-key="f4">F4</button>
+            <button class="f-key" data-key="f5">F5</button>
+            <button class="f-key" data-key="f6">F6</button>
+            <button class="f-key" data-key="f7">F7</button>
+            <button class="f-key" data-key="f8">F8</button>
+            <button class="f-key" data-key="f9">F9</button>
+            <button class="f-key" data-key="f10">F10</button>
+            <button class="f-key" data-key="f11">F11</button>
+            <button class="f-key" data-key="f12">F12</button>
+          </div>
+
+          <!-- Navigation & Modifier Key Grid -->
+          <div class="keys-grid">
+            <!-- Row 1 -->
+            <div class="keys-row">
+              <button class="kb-key key-wide" data-key="tab">Tab</button>
+              <button class="kb-key" data-key="home">Home</button>
+              <button class="kb-key" data-key="up">▲</button>
+              <button class="kb-key" data-key="end">End</button>
+              <button class="kb-key key-wide" data-key="backspace">⌫</button>
+            </div>
+            <!-- Row 2 -->
+            <div class="keys-row">
+              <button id="keyCtrl" class="kb-key key-mod" data-mod="ctrl">Ctrl</button>
+              <button class="kb-key" data-key="left">◀</button>
+              <button class="kb-key" data-key="down">▼</button>
+              <button class="kb-key" data-key="right">▶</button>
+              <button class="kb-key key-wide key-enter" data-key="enter">Enter</button>
+            </div>
+            <!-- Row 3 -->
+            <div class="keys-row">
+              <button id="keyWin" class="kb-key key-mod" data-mod="win">Win</button>
+              <button id="keyAlt" class="kb-key key-mod" data-mod="alt">Alt</button>
+              <button class="kb-key key-space" data-key="space">Space</button>
+              <button class="kb-key" data-key="pageup">PgUp</button>
+              <button class="kb-key" data-key="pagedown">PgDn</button>
+              <button class="kb-key" data-key="delete">Del</button>
+            </div>
+          </div>
+
+          <!-- Adaptive Layout Pill Selector -->
+          <div class="layout-toggle-bar">
+            <span>Adaptive Keyboard Layout:</span>
+            <div class="segmented-control">
+              <button id="btnLayoutPC" class="seg-btn active">PC (Win)</button>
+              <button id="btnLayoutMac" class="seg-btn">Mac (Apple)</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW 3: SPECIALTY PANELS (REORDERABLE) -->
+      <section id="viewPanels" class="view-panel">
+        <div id="panelsContainer" class="panels-container">
+
+          <!-- PANEL: MEDIA REMOTE -->
+          <div class="panel-card" data-panel-id="media">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">🎵</span>
+                <span class="panel-title">Media Remote</span>
+              </div>
+              <div class="panel-reorder-btns">
+                <button class="btn-order btn-move-up" title="Move Up">▲</button>
+                <button class="btn-order btn-move-down" title="Move Down">▼</button>
+              </div>
+            </div>
+
+            <div class="media-presets">
+              <span class="media-tag">YouTube</span>
+              <span class="media-tag">Netflix</span>
+              <span class="media-tag">Spotify</span>
+              <span class="media-tag">VLC</span>
+              <span class="media-tag">Disney+</span>
+              <span class="media-tag">Apple TV+</span>
+            </div>
+
+            <!-- Media Dial Controls -->
+            <div class="media-controls-grid">
+              <button class="media-btn" data-media="seek_backward" title="Skip -5s">⏪ -5s</button>
+              <button class="media-btn media-playpause" data-media="playpause" title="Play / Pause">⏯</button>
+              <button class="media-btn" data-media="seek_forward" title="Skip +5s">+5s ⏩</button>
+            </div>
+
+            <div class="media-secondary-row">
+              <button class="media-btn" data-media="prev" title="Previous Track">⏮ Prev</button>
+              <button class="media-btn" data-media="volup" title="Volume Up">🔊 Vol +</button>
+              <button class="media-btn" data-media="voldown" title="Volume Down">🔉 Vol -</button>
+              <button class="media-btn" data-media="mute" title="Mute">🔇 Mute</button>
+              <button class="media-btn" data-media="next" title="Next Track">Next ⏭</button>
+            </div>
+
+            <div class="media-extra-row">
+              <button class="chip-btn" data-media="fullscreen">⛶ Fullscreen</button>
+              <button class="chip-btn" data-media="subtitles">💬 Subtitles</button>
+              <button class="chip-btn" data-media="theater">🔲 Theater Mode</button>
+            </div>
+          </div>
+
+          <!-- PANEL: WEB REMOTE -->
+          <div class="panel-card" data-panel-id="web">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">🌐</span>
+                <span class="panel-title">Web Remote (Chrome, Firefox, Opera)</span>
+              </div>
+              <div class="panel-reorder-btns">
+                <button class="btn-order btn-move-up" title="Move Up">▲</button>
+                <button class="btn-order btn-move-down" title="Move Down">▼</button>
+              </div>
+            </div>
+
+            <div class="actions-grid-3">
+              <button class="grid-btn" data-web="back">◀ Back</button>
+              <button class="grid-btn" data-web="refresh">🔄 Reload</button>
+              <button class="grid-btn" data-web="forward">Forward ▶</button>
+            </div>
+
+            <div class="actions-grid-3">
+              <button class="grid-btn" data-web="new_tab">+ New Tab</button>
+              <button class="grid-btn" data-web="close_tab">✕ Close Tab</button>
+              <button class="grid-btn" data-web="reopen_tab">↩ Reopen Tab</button>
+            </div>
+
+            <div class="actions-grid-2">
+              <button class="grid-btn" data-web="prev_tab">◀ Previous Tab</button>
+              <button class="grid-btn" data-web="next_tab">Next Tab ▶</button>
+            </div>
+
+            <div class="actions-grid-3">
+              <button class="grid-btn" data-web="address_bar">🔍 URL Bar</button>
+              <button class="grid-btn" data-web="bookmark">⭐ Bookmark</button>
+              <button class="grid-btn" data-web="find">🔎 Find</button>
+            </div>
+
+            <div class="actions-grid-3">
+              <button class="grid-btn" data-web="zoom_out">🔍- Zoom Out</button>
+              <button class="grid-btn" data-web="zoom_reset">100% Reset</button>
+              <button class="grid-btn" data-web="zoom_in">🔍+ Zoom In</button>
+            </div>
+          </div>
+
+          <!-- PANEL: APP SWITCHER -->
+          <div class="panel-card" data-panel-id="app">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">🔀</span>
+                <span class="panel-title">App Switcher</span>
+              </div>
+              <div class="panel-reorder-btns">
+                <button class="btn-order btn-move-up" title="Move Up">▲</button>
+                <button class="btn-order btn-move-down" title="Move Down">▼</button>
+              </div>
+            </div>
+
+            <div class="actions-grid-2">
+              <button class="grid-btn btn-highlight" data-app="switch_next">Next App (Alt+Tab)</button>
+              <button class="grid-btn" data-app="switch_prev">Prev App</button>
+            </div>
+
+            <div class="actions-grid-3">
+              <button class="grid-btn" data-app="task_view">Task View</button>
+              <button class="grid-btn" data-app="show_desktop">Show Desktop</button>
+              <button class="grid-btn btn-danger-soft" data-app="close_window">Close App</button>
+            </div>
+
+            <div class="quick-launchers-title">Quick Launchers:</div>
+            <div class="actions-grid-3">
+              <button class="grid-btn" data-app="launch:browser">Browser</button>
+              <button class="grid-btn" data-app="launch:explorer">Files</button>
+              <button class="grid-btn" data-app="launch:terminal">Terminal</button>
+              <button class="grid-btn" data-app="launch:calc">Calc</button>
+              <button class="grid-btn" data-app="launch:taskmgr">Task Mgr</button>
+            </div>
+          </div>
+
+          <!-- PANEL: CLIPBOARD SYNC -->
+          <div class="panel-card" data-panel-id="clipboard">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">📋</span>
+                <span class="panel-title">Clipboard Sync</span>
+              </div>
+              <div class="panel-reorder-btns">
+                <button class="btn-order btn-move-up" title="Move Up">▲</button>
+                <button class="btn-order btn-move-down" title="Move Down">▼</button>
+              </div>
+            </div>
+
+            <textarea id="clipSendText" class="clip-textarea" placeholder="Paste or type text to send to computer..."></textarea>
+            <div class="actions-grid-2">
+              <button id="btnClipSend" class="grid-btn btn-highlight">Copy to PC Clipboard</button>
+              <button id="btnClipSendPaste" class="grid-btn">Copy & Auto-Paste</button>
+            </div>
+
+            <hr class="card-divider">
+
+            <button id="btnClipFetch" class="grid-btn">Fetch PC Clipboard</button>
+            <div id="clipFetchResult" class="clip-result-box empty">Fetched text will appear here...</div>
+          </div>
+
+          <!-- PANEL: POWER OPTIONS -->
+          <div class="panel-card" data-panel-id="power">
+            <div class="panel-header">
+              <div class="panel-title-wrap">
+                <span class="panel-icon">⚡</span>
+                <span class="panel-title">Power Options</span>
+              </div>
+              <div class="panel-reorder-btns">
+                <button class="btn-order btn-move-up" title="Move Up">▲</button>
+                <button class="btn-order btn-move-down" title="Move Down">▼</button>
+              </div>
+            </div>
+
+            <div class="actions-grid-2">
+              <button class="grid-btn" data-power="lock">🔒 Lock Computer</button>
+              <button class="grid-btn" data-power="sleep">🌙 Sleep Mode</button>
+            </div>
+
+            <div class="actions-grid-2">
+              <button class="grid-btn btn-warning" data-power="restart">🔄 Restart...</button>
+              <button class="grid-btn btn-danger" data-power="shutdown">🛑 Shut Down...</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW 4: SETTINGS & WALLPAPERS -->
+      <section id="viewSettings" class="view-panel">
+        <div class="settings-container">
+          
+          <!-- Connection Settings -->
+          <div class="settings-group">
+            <h3 class="settings-title">Connection & Security</h3>
+            
+            <div class="settings-row">
+              <span>Server Host / IP</span>
+              <input type="text" id="cfgHost" class="settings-input" placeholder="e.g. 192.168.1.10">
+            </div>
+
+            <div class="settings-row">
+              <span>WebSocket Port</span>
+              <input type="number" id="cfgWsPort" class="settings-input" value="8001">
+            </div>
+
+            <div class="settings-row">
+              <span>Connection Password</span>
+              <input type="password" id="cfgPassword" class="settings-input" placeholder="Password (if enabled)">
+            </div>
+
+            <div class="actions-grid-2" style="margin-top: 10px;">
+              <button id="btnSaveConn" class="grid-btn btn-highlight">Save & Connect</button>
+              <button id="btnBluetoothScan" class="grid-btn">Scan Web Bluetooth</button>
+            </div>
+          </div>
+
+          <!-- Wallpaper & Customization -->
+          <div class="settings-group">
+            <h3 class="settings-title">Personal Wallpapers & Themes</h3>
+            <div class="wallpaper-selector">
+              <button class="theme-pill active" data-theme="theme-slate">Deep Slate</button>
+              <button class="theme-pill" data-theme="theme-neon">Cyber Neon</button>
+              <button class="theme-pill" data-theme="theme-midnight">Midnight Navy</button>
+              <button class="theme-pill" data-theme="theme-emerald">Obsidian Green</button>
+            </div>
+
+            <div class="custom-wallpaper-box">
+              <label for="wallpaperUpload" class="file-upload-label">
+                <span>Upload Custom Image</span>
+              </label>
+              <input type="file" id="wallpaperUpload" accept="image/*" class="file-input-hidden">
+              <button id="btnClearWallpaper" class="btn-mini">Reset Wallpaper</button>
+            </div>
+          </div>
+
+          <!-- Mouse & Gesture Preferences -->
+          <div class="settings-group">
+            <h3 class="settings-title">Mouse & Gestures</h3>
+            
+            <div class="settings-toggle-row">
+              <div>
+                <span class="setting-name">Left-Handed Mode</span>
+                <p class="setting-desc">Swaps left and right click buttons & tap gestures</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggleLeftHanded">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="settings-slider-row">
+              <div class="slider-header">
+                <span>Cursor Acceleration</span>
+                <span id="lblSpeed">1.2x</span>
+              </div>
+              <input type="range" id="sliderSpeed" min="0.5" max="3.0" step="0.1" value="1.2">
+            </div>
+
+            <div class="settings-slider-row">
+              <div class="slider-header">
+                <span>Gyroscope Sensitivity</span>
+                <span id="lblGyroSens">1.5x</span>
+              </div>
+              <input type="range" id="sliderGyroSens" min="0.5" max="4.0" step="0.1" value="1.5">
+            </div>
+
+            <div class="settings-slider-row">
+              <div class="slider-header">
+                <span>Scroll Speed</span>
+                <span id="lblScrollSpeed">1.0x</span>
+              </div>
+              <input type="range" id="sliderScrollSpeed" min="0.2" max="2.5" step="0.1" value="1.0">
+            </div>
+          </div>
+
+          <!-- Physical Volume Buttons Hook -->
+          <div class="settings-group">
+            <h3 class="settings-title">Hardware Volume Buttons</h3>
+            <div class="settings-toggle-row">
+              <div>
+                <span class="setting-name">Phone Volume Rocker</span>
+                <p class="setting-desc">Controls PC master volume using physical phone buttons</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggleVolButtons" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <button class="nav-tab active" data-view="viewTrackpad">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+          <rect x="4" y="2" width="16" height="20" rx="3"/>
+          <line x1="4" y1="14" x2="20" y2="14"/>
+          <line x1="12" y1="14" x2="12" y2="22"/>
+        </svg>
+        <span>Trackpad</span>
+      </button>
+
+      <button class="nav-tab" data-view="viewKeyboard">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/>
+        </svg>
+        <span>Keyboard</span>
+      </button>
+
+      <button class="nav-tab" data-view="viewPanels">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        <span>Panels</span>
+      </button>
+
+      <button class="nav-tab" data-view="viewSettings">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- MODAL: POWER CONFIRMATION -->
+  <div id="modalPower" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3 id="modalPowerTitle" class="modal-title">Confirm Power Action</h3>
+      <p id="modalPowerDesc" class="modal-desc">Are you sure you want to perform this action?</p>
+      <div class="actions-grid-2">
+        <button id="btnCancelPower" class="grid-btn">Cancel</button>
+        <button id="btnConfirmPower" class="grid-btn btn-danger">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONNECTION DETAILS -->
+  <div id="modalConn" class="modal-overlay hidden">
+    <div class="modal-box modal-wide">
+      <div class="modal-header-tabs">
+        <button id="tabConnWifi" class="modal-tab-btn active">Wi-Fi / LAN</button>
+        <button id="tabConnBt" class="modal-tab-btn">Direct Bluetooth</button>
+      </div>
+
+      <!-- TAB 1: WI-FI / LAN -->
+      <div id="tabContentWifi" class="modal-tab-content active">
+        <p class="modal-desc">Connect phone to PC on the same Wi-Fi network.</p>
+        
+        <div class="modal-form">
+          <label>Computer IP Address:</label>
+          <div class="input-with-action">
+            <input type="text" id="modalHostInput" class="settings-input" placeholder="e.g. 192.168.101.73">
+            <button id="btnScanLan" class="btn-mini-action" title="Auto Scan LAN">Scan</button>
+          </div>
+          
+          <div class="ip-suggestions-label">Detected / Suggested IPs:</div>
+          <div id="ipSuggestions" class="ip-chips-row">
+            <button class="ip-chip" data-ip="192.168.101.73">192.168.101.73</button>
+            <button class="ip-chip" data-ip="192.168.137.1">192.168.137.1</button>
+            <button class="ip-chip" data-ip="172.16.0.2">172.16.0.2</button>
+          </div>
+
+          <label style="margin-top: 8px;">WebSocket Port:</label>
+          <input type="number" id="modalPortInput" class="settings-input" value="8001">
+        </div>
+
+        <div class="actions-grid-2" style="margin-top: 15px;">
+          <button id="btnCloseConnModal" class="grid-btn">Cancel</button>
+          <button id="btnModalReconnect" class="grid-btn btn-highlight">Connect Wi-Fi</button>
+        </div>
+      </div>
+
+      <!-- TAB 2: DIRECT BLUETOOTH -->
+      <div id="tabContentBt" class="modal-tab-content">
+        <p class="modal-desc">Direct Bluetooth Mouse API (no tethering or hotspot needed). Pair your phone with PC first in Android Bluetooth settings.</p>
+
+        <div class="bt-section-header">
+          <span>Paired Bluetooth Devices:</span>
+          <button id="btnBtRefresh" class="btn-mini">Refresh</button>
+        </div>
+
+        <div id="btDeviceList" class="bt-devices-container">
+          <div class="bt-status-msg">Searching paired devices...</div>
+        </div>
+
+        <div id="btActiveStatus" class="bt-active-box hidden">
+          <span id="btActiveText">Connected via Bluetooth HID</span>
+          <button id="btnBtDisconnect" class="btn-mini btn-danger-soft">Disconnect</button>
+        </div>
+
+        <div class="actions-grid-2" style="margin-top: 15px;">
+          <button id="btnCloseConnModalBt" class="grid-btn">Tutup</button>
+          <button id="btnBtPairSettings" class="grid-btn btn-highlight">Pair di Pengaturan HP</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

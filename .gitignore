@@ -1,0 +1,30 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Android build outputs & local properties
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+.gradle/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE & OS files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db

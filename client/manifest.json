@@ -1,0 +1,18 @@
+{
+  "name": "Remote Mouse",
+  "short_name": "RemoteMouse",
+  "description": "Wireless Mouse, Keyboard, Magic Trackpad & Remote Control for PC and Mac",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090a0f",
+  "theme_color": "#090a0f",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
